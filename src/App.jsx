@@ -329,7 +329,15 @@ export default function App() {
                     <div className="mt-2 text-xs text-gray-600">
                       <div>{formatSize(img.originalSize)}</div>
                       {img.processedSize && (
-                        <div className="text-green-600 font-medium">
+                        <div
+                          className={`font-medium ${
+                            img.metrics?.reduction?.includes('smaller')
+                              ? 'text-green-600'
+                              : img.metrics?.reduction?.includes('larger')
+                              ? 'text-red-600'
+                              : 'text-gray-500'
+                          }`}
+                        >
                           → {formatSize(img.processedSize)}
                         </div>
                       )}
@@ -382,7 +390,7 @@ export default function App() {
                     className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
                   >
                     <Download className="w-5 h-5" />
-                    Download All as ZIP
+                    Download all as ZIP
                   </button>
                 </div>
               </div>
