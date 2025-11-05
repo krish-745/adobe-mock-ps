@@ -104,73 +104,35 @@ export default function App() {
 
   const processImageViaAPI = async (file, width, height, quality) => {
     return new Promise((resolve, reject) => {
-      // First, compress the image client-side before sending to API
-      const img = new Image();
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
       const reader = new FileReader();
-      reader.onload = async (e) => {
-        img.onload = async () => {
-          try {
-            // Calculate dimensions while maintaining aspect ratio
-            let targetWidth = img.width;
-            let targetHeight = img.height;
-            const maxDimension = 2048; // Pre-compress very large images
-            
-            if (targetWidth > maxDimension || targetHeight > maxDimension) {
-              if (targetWidth > targetHeight) {
-                targetHeight = (maxDimension / targetWidth) * targetHeight;
-                targetWidth = maxDimension;
-              } else {
-                targetWidth = (maxDimension / targetHeight) * targetWidth;
-                targetHeight = maxDimension;
-              }
-            }
-            
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-            
-            // Convert to base64 with moderate quality
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.9);
-            
-            const res = await fetch('/api/process-image', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                image: compressedBase64, 
-                width, 
-                height, 
-                quality 
-              })
-            });
+      reader.onload = async () => {
+        try {
+          const res = await fetch('/api/process-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: reader.result, width, height, quality })
+          });
 
-            if (!res.ok) {
-              const errData = await res.json();
-              throw new Error(errData.error || 'API request failed');
-            }
-
-            const data = await res.json();
-            if (!data.success) throw new Error(data.error || 'Processing failed');
-
-            const base64Res = await fetch(data.image);
-            const blob = await base64Res.blob();
-
-            resolve({
-              url: URL.createObjectURL(blob),
-              blob,
-              metrics: data.metrics
-            });
-          } catch (err) {
-            reject(err);
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || 'API request failed');
           }
-        };
-        
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = e.target.result;
+
+          const data = await res.json();
+          if (!data.success) throw new Error(data.error || 'Processing failed');
+
+          const base64Res = await fetch(data.image);
+          const blob = await base64Res.blob();
+
+          resolve({
+            url: URL.createObjectURL(blob),
+            blob,
+            metrics: data.metrics
+          });
+        } catch (err) {
+          reject(err);
+        }
       };
-      
       reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsDataURL(file);
     });
