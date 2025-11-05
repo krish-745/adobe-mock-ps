@@ -277,12 +277,6 @@ export default function App() {
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            {dragActive && (
-              <div className="absolute inset-0 bg-blue-100/70 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center text-blue-600 font-semibold text-lg z-10 transition-all duration-300">
-                <Upload className="w-10 h-10 mb-2 animate-bounce" />
-                Drop your images here ✨
-              </div>
-            )}
             <Upload className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Drag & Drop Images Here</h3>
             <p className="text-gray-500 mb-4">or</p>
