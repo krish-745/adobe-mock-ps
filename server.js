@@ -74,7 +74,7 @@ app.post('/api/process-image', async (req, res) => {
       reductionLabel = 'Same size';
     }
 
-    console.log('Sizes:', { originalSize, newSize, percentChange, rounded, reductionLabel });
+    // console.log('Sizes:', { originalSize, newSize, percentChange, rounded, reductionLabel });
 
     // Response send
     res.json({
