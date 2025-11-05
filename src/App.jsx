@@ -127,13 +127,30 @@ export default function App() {
           const data = await res.json();
           if (!data.success) throw new Error(data.error || 'Processing failed');
 
-          const base64Res = await fetch(data.image);
-          const blob = await base64Res.blob();
+          let base64String;
 
-          resolve({
-            url: URL.createObjectURL(blob),
-            blob,
-            metrics: data.metrics
+          if (reader.result.startsWith('blob:')) {
+            // Convert blob URL to Base64 manually (for mobile)
+            const blob = await fetch(reader.result).then(r => r.blob());
+            base64String = await new Promise((resolve) => {
+              const newReader = new FileReader();
+              newReader.onloadend = () => resolve(newReader.result);
+              newReader.readAsDataURL(blob);
+            });
+          } else {
+            base64String = reader.result;
+          }
+
+          // Send normalized Base64 to API
+          const response = await fetch('/api/process-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              image: base64String,
+              width,
+              height,
+              quality
+            })
           });
         } catch (err) {
           reject(err);
