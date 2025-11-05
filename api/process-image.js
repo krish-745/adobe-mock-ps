@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     }
 
     // Decode base64
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const base64Data = image.replace(/^data:.*;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
     const originalSize = imageBuffer.length;
 
