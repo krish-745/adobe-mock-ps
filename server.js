@@ -15,9 +15,29 @@ app.post('/api/process-image', async (req, res) => {
     }
 
     // Decode base64
-    const base64Data = image.replace(/^data:.*;base64,/, '');
+    let base64Data = image;
+    if (base64Data.startsWith('data:')) {
+      const commaIndex = base64Data.indexOf(',');
+      if (commaIndex !== -1) base64Data = base64Data.slice(commaIndex + 1);
+    }
+
     const imageBuffer = Buffer.from(base64Data, 'base64');
     const originalSize = imageBuffer.length;
+
+    // Debug info
+    console.log('Received image length:', originalSize);
+    if (originalSize < 100) {
+      console.error('Invalid or empty image buffer.');
+      return res.status(400).json({ error: 'Invalid image data received' });
+    }
+
+    // Verify sharp compatibility
+    try {
+      await sharp(imageBuffer).metadata();
+    } catch (metaErr) {
+      console.error('Sharp metadata read failed:', metaErr.message);
+      return res.status(400).json({ error: 'Invalid image format (cannot read metadata)' });
+    }
 
     // Process image
     const processedBuffer = await sharp(imageBuffer)
@@ -53,6 +73,7 @@ app.post('/api/process-image', async (req, res) => {
     });
   } catch (e) {
     // Error handle
+    console.error('Processing failed:', e);
     res.status(500).json({ error: e.message });
   }
 });
