@@ -53,23 +53,17 @@ export default async function handler(req, res) {
     }
 
     // Process image
-    let processedBuffer;
-    try {
-      // Try normal decode
-      processedBuffer = await sharp(imageBuffer)
-        .resize(width, height, { fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: Math.round(quality * 100) })
-        .toBuffer();
-    } catch (err) {
-      console.warn('Sharp failed on normal decode, retrying as HEIC/Web-compatible JPEG:', err.message);
-
-      // Retry using failOnError:false and re-encode
-      processedBuffer = await sharp(imageBuffer, { failOnError: false })
-        .toFormat('jpeg')
-        .resize(width, height, { fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: Math.round(quality * 100) })
-        .toBuffer();
-    }
+    const processedBuffer = await sharp(imageBuffer)
+      .resize(width, height, {
+        fit: 'inside',
+        withoutEnlargement: true,
+        background: { r: 255, g: 255, b: 255, alpha: 1 }
+      })
+      .jpeg({ 
+        quality: Math.round(quality * 100),
+        mozjpeg: true
+      })
+      .toBuffer();
 
     // Metrics calc
     const newSize = processedBuffer.length;
