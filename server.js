@@ -25,7 +25,7 @@ app.post('/api/process-image', async (req, res) => {
     const originalSize = imageBuffer.length;
 
     // Debug info
-    console.log('Received image length:', originalSize);
+    // console.log('Received image length:', originalSize);
     if (originalSize < 100) {
       console.error('Invalid or empty image buffer.');
       return res.status(400).json({ error: 'Invalid image data received' });
