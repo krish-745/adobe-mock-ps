@@ -128,39 +128,55 @@ export default function App() {
   };
 
   const processImageViaAPI = async (file, width, height, quality) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const res = await fetch('/api/process-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: reader.result, width, height, quality })
-          });
+    try {
+      // Force proper Base64 reading (handles large files + mobile)
+      const base64String = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (!reader.result) reject(new Error('Empty Base64 result'));
+          else resolve(reader.result);
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
 
-          if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.error || 'API request failed');
-          }
+      // Safety: normalize header if missing
+      let normalized = base64String;
+      if (!normalized.startsWith('data:image')) {
+        normalized = `data:image/jpeg;base64,${normalized.split(',').pop()}`;
+      }
 
-          const data = await res.json();
-          if (!data.success) throw new Error(data.error || 'Processing failed');
+      const response = await fetch('/api/process-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: normalized,
+          width,
+          height,
+          quality
+        })
+      });
 
-          const base64Res = await fetch(data.image);
-          const blob = await base64Res.blob();
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'API request failed');
+      }
 
-          resolve({
-            url: URL.createObjectURL(blob),
-            blob,
-            metrics: data.metrics
-          });
-        } catch (err) {
-          reject(err);
-        }
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error || 'Processing failed');
+
+      const base64Response = await fetch(data.image);
+      const blob = await base64Response.blob();
+
+      return {
+        url: URL.createObjectURL(blob),
+        blob,
+        metrics: data.metrics
       };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
-    });
+    } catch (error) {
+      console.error(`Error processing ${file.name}:`, error);
+      throw error;
+    }
   };
 
   const downloadAll = async () => {
