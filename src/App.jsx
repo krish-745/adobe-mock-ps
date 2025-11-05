@@ -76,12 +76,18 @@ export default function App() {
 
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
+
       try {
         const processed = await processImageViaAPI(
-          img.file, preset.width, preset.height, quality / 100
+          img.file,
+          preset.width,
+          preset.height,
+          quality / 100
         );
+
         totalOriginal += img.originalSize;
         totalCompressed += processed.metrics.newSize;
+
         processedImages.push({
           ...img,
           processed: processed.url,
@@ -89,10 +95,29 @@ export default function App() {
           blob: processed.blob,
           metrics: processed.metrics
         });
+
         setProgress(((i + 1) / images.length) * 100);
-      } catch (err) {
-        console.error('Error processing image:', err);
-        setError(`Failed to process ${img.file.name}: ${err.message}`);
+
+      } catch (error) {
+        console.error('Error processing image:', error);
+
+        // Extra debug info
+        try {
+          const debugReader = new FileReader();
+          debugReader.onloadend = () => {
+            const result = debugReader.result;
+            console.error(`⚠️ Failed Image: ${img.file.name}`);
+            console.error(`🧩 Data starts with: ${result?.slice(0, 100)}`);
+            setError(
+              `Failed to process ${img.file.name}: ${error.message}\n` +
+              `Data snippet: ${result?.slice(0, 100)}`
+            );
+          };
+          debugReader.readAsDataURL(img.file);
+        } catch (readErr) {
+          console.error('Could not read file for debugging:', readErr);
+        }
+
         processedImages.push(img);
       }
     }
@@ -107,16 +132,10 @@ export default function App() {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
-          // Normalize DataURL from mobile browsers
-          let normalizedImage = reader.result;
-          if (!normalizedImage.startsWith('data:image')) {
-            // Some mobile browsers send incomplete data URLs
-            normalizedImage = `data:image/jpeg;base64,${normalizedImage.split(',').pop()}`;
-          }
           const res = await fetch('/api/process-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: normalizedImage, width, height, quality })
+            body: JSON.stringify({ image: reader.result, width, height, quality })
           });
 
           if (!res.ok) {
@@ -127,30 +146,13 @@ export default function App() {
           const data = await res.json();
           if (!data.success) throw new Error(data.error || 'Processing failed');
 
-          let base64String;
+          const base64Res = await fetch(data.image);
+          const blob = await base64Res.blob();
 
-          if (reader.result.startsWith('blob:')) {
-            // Convert blob URL to Base64 manually (for mobile)
-            const blob = await fetch(reader.result).then(r => r.blob());
-            base64String = await new Promise((resolve) => {
-              const newReader = new FileReader();
-              newReader.onloadend = () => resolve(newReader.result);
-              newReader.readAsDataURL(blob);
-            });
-          } else {
-            base64String = reader.result;
-          }
-
-          // Send normalized Base64 to API
-          const response = await fetch('/api/process-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              image: base64String,
-              width,
-              height,
-              quality
-            })
+          resolve({
+            url: URL.createObjectURL(blob),
+            blob,
+            metrics: data.metrics
           });
         } catch (err) {
           reject(err);
