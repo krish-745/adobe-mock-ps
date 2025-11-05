@@ -238,6 +238,24 @@ export default function App() {
           </div>
         )}
 
+        {!processing && images.length > 0 && totalSaved.original > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-green-600 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-green-800 font-medium">Processing Complete</p>
+              <p className="text-green-700 text-sm">
+                All images have been successfully resized and compressed! Scroll down to download as a ZIP file.
+              </p>
+            </div>
+            <button
+              onClick={() => setTotalSaved({ original: 0, compressed: 0 })}
+              className="text-green-600 hover:text-green-800"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* Controls */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
