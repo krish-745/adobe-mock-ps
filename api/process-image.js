@@ -27,11 +27,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields: image, width, height, quality' });
     }
 
-    // Decode base64 safely
+    // Decode base64 with validation
     let base64Data = image;
     if (base64Data.startsWith('data:')) {
       const commaIndex = base64Data.indexOf(',');
       if (commaIndex !== -1) base64Data = base64Data.slice(commaIndex + 1);
+    }
+
+    // Validate base64 format
+    if (!/^[A-Za-z0-9+/=]+$/.test(base64Data)) {
+      return res.status(400).json({ error: 'Invalid base64 format' });
     }
 
     const imageBuffer = Buffer.from(base64Data, 'base64');
@@ -41,19 +46,27 @@ export default async function handler(req, res) {
     console.log('Received image length:', originalSize);
     if (originalSize < 100) {
       console.error('Invalid or empty image buffer.');
-      return res.status(400).json({ error: 'Invalid image data received' });
+      return res.status(400).json({ error: 'Invalid image data (too small)' });
     }
 
-    // Metadata check
+    // Verify sharp can read the image and get metadata
+    let metadata;
     try {
-      await sharp(imageBuffer).metadata();
+      metadata = await sharp(imageBuffer).metadata();
+      console.log('Image metadata:', { 
+        format: metadata.format, 
+        width: metadata.width, 
+        height: metadata.height,
+        orientation: metadata.orientation 
+      });
     } catch (metaErr) {
       console.error('Sharp metadata read failed:', metaErr.message);
-      return res.status(400).json({ error: 'Invalid image format (cannot read metadata)' });
+      return res.status(400).json({ error: 'Cannot read image format. Please try a different photo.' });
     }
 
-    // Process image
+    // Process image with EXIF orientation handling
     const processedBuffer = await sharp(imageBuffer)
+      .rotate() // Auto-rotate based on EXIF orientation
       .resize(width, height, {
         fit: 'inside',
         withoutEnlargement: true,
@@ -96,11 +109,23 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    // Error log
+    // Error log with more detail
     console.error('Error processing image:', error);
+    const errorMsg = error.message.includes('Input buffer')
+      ? 'Cannot process this image format'
+      : error.message;
     return res.status(500).json({ 
       error: 'Failed to process image',
-      details: error.message 
+      details: errorMsg
     });
   }
 }
+
+// Increase body size limit for Vercel
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};
