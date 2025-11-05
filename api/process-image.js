@@ -22,7 +22,7 @@ export default async function handler(req, res) {
 
   try {
     // Input check
-    const { image, width, height, quality } = req.body;
+    const { image, width, height, quality, actualOriginalSize } = req.body;
     if (!image || !width || !height || !quality) {
       return res.status(400).json({ error: 'Missing required fields: image, width, height, quality' });
     }
@@ -40,11 +40,15 @@ export default async function handler(req, res) {
     }
 
     const imageBuffer = Buffer.from(base64Data, 'base64');
-    const originalSize = imageBuffer.length;
+    // Use the actual file size if provided, otherwise fall back to buffer length
+    const originalSize = actualOriginalSize || imageBuffer.length;
 
     // Debug info
-    console.log('Received image length:', originalSize);
-    if (originalSize < 100) {
+    console.log('Received image length:', imageBuffer.length);
+    console.log('Original file size:', actualOriginalSize);
+    console.log('Using originalSize:', originalSize);
+    
+    if (imageBuffer.length < 100) {
       console.error('Invalid or empty image buffer.');
       return res.status(400).json({ error: 'Invalid image data (too small)' });
     }
@@ -80,18 +84,20 @@ export default async function handler(req, res) {
 
     // Metrics calc
     const newSize = processedBuffer.length;
-    const sizeDiff = newSize - originalSize;
-    const percentDiff = ((sizeDiff / originalSize) * 100).toFixed(1);
+    const percentChange = ((newSize - originalSize) / originalSize * 100);
+    const rounded = Math.abs(percentChange).toFixed(1);
 
     // Label set
     let reductionLabel;
-    if (sizeDiff < 0) {
-      reductionLabel = `${Math.abs(percentDiff)}% smaller`;
-    } else if (sizeDiff > 0) {
-      reductionLabel = `${percentDiff}% larger`;
+    if (percentChange < 0) {
+      reductionLabel = `${rounded}% smaller`;
+    } else if (percentChange > 0) {
+      reductionLabel = `${rounded}% larger`;
     } else {
       reductionLabel = 'Same size';
     }
+
+    console.log('Sizes:', { originalSize, newSize, percentChange, rounded, reductionLabel });
 
     // Encode base64
     const base64Image = processedBuffer.toString('base64');
@@ -103,7 +109,7 @@ export default async function handler(req, res) {
         originalSize,
         newSize,
         reduction: reductionLabel,
-        reductionBytes: sizeDiff,
+        reductionBytes: originalSize - newSize, // Positive = saved bytes
       },
       image: `data:image/jpeg;base64,${base64Image}`
     });

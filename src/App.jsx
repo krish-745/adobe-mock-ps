@@ -142,7 +142,8 @@ export default function App() {
                 image: compressedBase64, 
                 width, 
                 height, 
-                quality 
+                quality,
+                actualOriginalSize: file.size // Send the real file size
               })
             });
 
