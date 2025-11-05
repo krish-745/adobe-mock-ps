@@ -107,10 +107,16 @@ export default function App() {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
+          // Normalize DataURL from mobile browsers
+          let normalizedImage = reader.result;
+          if (!normalizedImage.startsWith('data:image')) {
+            // Some mobile browsers send incomplete data URLs
+            normalizedImage = `data:image/jpeg;base64,${normalizedImage.split(',').pop()}`;
+          }
           const res = await fetch('/api/process-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: reader.result, width, height, quality })
+            body: JSON.stringify({ image: normalizedImage, width, height, quality })
           });
 
           if (!res.ok) {
