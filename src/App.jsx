@@ -373,7 +373,7 @@ export default function App() {
         </div>
 
         {/* Upload zone */}
-        {images.length === 0 && (
+        {images.length === 0 ? (
           <div
             className={`relative bg-white rounded-xl shadow-lg p-12 text-center border-2 border-dashed transition-colors ${
               dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
