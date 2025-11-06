@@ -45,12 +45,11 @@ app.post('/api/process-image', async (req, res) => {
       });
     }
 
-    // Process image
+    // Process image with exact dimensions
     const processedBuffer = await sharp(imageBuffer)
       .resize(width, height, { 
-        fit: 'inside', 
-        withoutEnlargement: true,
-        background: { r: 255, g: 255, b: 255, alpha: 1 }
+        fit: 'contain',
+        background: { r: 255, g: 255, b: 255, alpha: 1 }  // White background for bars
       })
       .jpeg({ 
         quality: Math.round(quality * 100),
@@ -72,8 +71,6 @@ app.post('/api/process-image', async (req, res) => {
     } else {
       reductionLabel = 'Same size';
     }
-
-    // console.log('Sizes:', { originalSize, newSize, percentChange, rounded, reductionLabel });
 
     // Response send
     res.json({

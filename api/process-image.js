@@ -68,12 +68,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Cannot read image format. Please try a different photo.' });
     }
 
-    // Process image
+    // Process image with exact dimensions
     const processedBuffer = await sharp(imageBuffer)
       .resize(width, height, {
-        fit: 'inside',
-        withoutEnlargement: true,
-        background: { r: 255, g: 255, b: 255, alpha: 1 }
+        fit: 'contain',
+        background: { r: 255, g: 255, b: 255, alpha: 1 }  // White background for bars
       })
       .jpeg({ 
         quality: Math.round(quality * 100),
