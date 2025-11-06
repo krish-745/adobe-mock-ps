@@ -68,9 +68,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Cannot read image format. Please try a different photo.' });
     }
 
-    // Process image with EXIF orientation handling
+    // Process image
     const processedBuffer = await sharp(imageBuffer)
-      .rotate() // Auto-rotate based on EXIF orientation
       .resize(width, height, {
         fit: 'inside',
         withoutEnlargement: true,

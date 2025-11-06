@@ -45,9 +45,8 @@ app.post('/api/process-image', async (req, res) => {
       });
     }
 
-    // Process image with EXIF orientation handling
+    // Process image
     const processedBuffer = await sharp(imageBuffer)
-      .rotate() // Auto-rotate based on EXIF orientation
       .resize(width, height, { 
         fit: 'inside', 
         withoutEnlargement: true,
