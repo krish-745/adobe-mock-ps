@@ -9,7 +9,7 @@ app.use(cors());
 app.post('/api/process-image', async (req, res) => {
   try {
     // Input check
-    const { image, width, height, quality, actualOriginalSize } = req.body;
+    const { image, width, height, quality, actualOriginalSize, background } = req.body;
     if (!image || !width || !height || !quality) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -45,11 +45,19 @@ app.post('/api/process-image', async (req, res) => {
       });
     }
 
-    // Process image with exact dimensions
+    // Determine background color (defaults to white if invalid)
+    const bg = {
+      r: clamp(Number(background?.r) || 255),
+      g: clamp(Number(background?.g) || 255),
+      b: clamp(Number(background?.b) || 255),
+      alpha: 1
+    };
+
+    // Process image with Sharp
     const processedBuffer = await sharp(imageBuffer)
       .resize(width, height, { 
         fit: 'contain',
-        background: { r: 255, g: 255, b: 255, alpha: 1 }  // White background for bars
+        background: bg
       })
       .jpeg({ 
         quality: Math.round(quality * 100),
@@ -93,5 +101,10 @@ app.post('/api/process-image', async (req, res) => {
   }
 });
 
-// Server start
-app.listen(3001, () => console.log('API running at http://localhost:3001'));
+// Helper function to clamp RGB values between 0–255
+function clamp(value) {
+  return Math.max(0, Math.min(255, value));
+}
+
+// Start server
+app.listen(3001, () => console.log('✅ API running at http://localhost:3001'));

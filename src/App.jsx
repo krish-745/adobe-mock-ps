@@ -7,6 +7,11 @@ const PRESETS = {
   twitter: { width: 1200, height: 675, label: 'Twitter' }
 };
 
+function rgbToHex(r, g, b) {
+  const toHex = (n) => n.toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 export default function App() {
   const [images, setImages] = useState([]);
   const [quality, setQuality] = useState(80);
@@ -17,6 +22,10 @@ export default function App() {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
+
+  // Background color state
+  const [bgColor, setBgColor] = useState({ r: 255, g: 255, b: 255 });
+  const [hexColor, setHexColor] = useState('#f5f5f5');
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -143,7 +152,8 @@ export default function App() {
                 width, 
                 height, 
                 quality,
-                actualOriginalSize: file.size // Send the real file size
+                actualOriginalSize: file.size, // Send the real file size
+                background: bgColor // send user-selected color
               })
             });
 
@@ -290,24 +300,63 @@ export default function App() {
               />
             </div>
 
-            {/* Buttons */}
-            <div className="flex items-end gap-2">
-              <button
-                onClick={processImages}
-                disabled={images.length === 0 || processing}
-                className="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
-              >
-                {processing ? 'Processing...' : 'Process Images'}
-              </button>
-              {images.length > 0 && (
-                <button
-                  onClick={reset}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Reset
-                </button>
-              )}
+            {/* Background Color Picker */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={hexColor}
+                  onChange={(e) => {
+                    const hex = e.target.value;
+                    setHexColor(hex);
+                    setBgColor({
+                      r: parseInt(hex.slice(1, 3), 16),
+                      g: parseInt(hex.slice(3, 5), 16),
+                      b: parseInt(hex.slice(5, 7), 16)
+                    });
+                  }}
+                  className="w-10 h-10 p-0 border rounded"
+                />
+                <div className="flex gap-2">
+                  {['r', 'g', 'b'].map((ch) => (
+                    <input
+                      key={ch}
+                      type="number"
+                      min="0"
+                      max="255"
+                      value={bgColor[ch]}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(255, Number(e.target.value)));
+                        const newColor = { ...bgColor, [ch]: val };
+                        setBgColor(newColor);
+                        setHexColor(rgbToHex(newColor.r, newColor.g, newColor.b));
+                      }}
+                      className="w-16 px-2 py-1 border rounded"
+                      placeholder={ch.toUpperCase()}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div className="flex items-end gap-2">
+            <button
+              onClick={processImages}
+              disabled={images.length === 0 || processing}
+              className="flex-1 bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
+            >
+              {processing ? 'Processing...' : 'Process Images'}
+            </button>
+            {images.length > 0 && (
+              <button
+                onClick={reset}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Reset
+              </button>
+            )}
           </div>
 
           {processing && (
@@ -352,10 +401,7 @@ export default function App() {
               className="hidden"
             />
           </div>
-        )}
-
-        {/* Image preview grid */}
-        {images.length > 0 && (
+        ) : (
           <>
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <div className="flex justify-between items-center mb-4">

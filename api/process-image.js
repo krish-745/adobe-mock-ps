@@ -21,8 +21,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Input check
-    const { image, width, height, quality, actualOriginalSize } = req.body;
+    const { image, width, height, quality, actualOriginalSize, background } = req.body;
+
     if (!image || !width || !height || !quality) {
       return res.status(400).json({ error: 'Missing required fields: image, width, height, quality' });
     }
@@ -43,11 +43,6 @@ export default async function handler(req, res) {
     // Use the actual file size if provided, otherwise fall back to buffer length
     const originalSize = actualOriginalSize || imageBuffer.length;
 
-    // Debug info
-    console.log('Received image length:', imageBuffer.length);
-    console.log('Original file size:', actualOriginalSize);
-    console.log('Using originalSize:', originalSize);
-    
     if (imageBuffer.length < 100) {
       console.error('Invalid or empty image buffer.');
       return res.status(400).json({ error: 'Invalid image data (too small)' });
@@ -57,22 +52,24 @@ export default async function handler(req, res) {
     let metadata;
     try {
       metadata = await sharp(imageBuffer).metadata();
-      console.log('Image metadata:', { 
-        format: metadata.format, 
-        width: metadata.width, 
-        height: metadata.height,
-        orientation: metadata.orientation 
-      });
     } catch (metaErr) {
       console.error('Sharp metadata read failed:', metaErr.message);
       return res.status(400).json({ error: 'Cannot read image format. Please try a different photo.' });
     }
 
-    // Process image with exact dimensions
+    // Determine background color (from user input or default white)
+    const bg = {
+      r: clamp(Number(background?.r) || 255),
+      g: clamp(Number(background?.g) || 255),
+      b: clamp(Number(background?.b) || 255),
+      alpha: 1
+    };
+
+    // Process the image
     const processedBuffer = await sharp(imageBuffer)
       .resize(width, height, {
         fit: 'contain',
-        background: { r: 255, g: 255, b: 255, alpha: 1 }  // White background for bars
+        background: bg
       })
       .jpeg({ 
         quality: Math.round(quality * 100),
@@ -125,11 +122,16 @@ export default async function handler(req, res) {
   }
 }
 
-// Increase body size limit for Vercel
+// Helper: clamp RGB between 0–255
+function clamp(value) {
+  return Math.max(0, Math.min(255, value));
+}
+
+// Optional: increase request body limit for large images (Vercel)
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
+      sizeLimit: '50mb'
+    }
+  }
 };
