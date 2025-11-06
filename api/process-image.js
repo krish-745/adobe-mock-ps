@@ -92,7 +92,7 @@ export default async function handler(req, res) {
       reductionLabel = 'Same size';
     }
 
-    console.log('Sizes:', { originalSize, newSize, percentChange, rounded, reductionLabel });
+    // console.log('Sizes:', { originalSize, newSize, percentChange, rounded, reductionLabel });
 
     // Encode base64
     const base64Image = processedBuffer.toString('base64');
