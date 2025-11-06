@@ -1,25 +1,42 @@
-**Adobe Mock PS - Batch Image Resizer & Compressor**
-A modern web app for batch resizing and compressing images, optimized for mobile photographers and social media.
+# **Adobe Mock PS – Batch Image Resizer & Compressor**
 
-**Features**
-📱 Preset dimensions (Instagram, Story, Twitter)
-🎛️ Adjustable quality (60-100%)
-🖼️ Batch processing with drag & drop
-📦 Bulk download as ZIP
-📊 Real-time compression metrics
+A **modern web app** for batch resizing and compressing images — built for **mobile photographers** and **social media creators** who need quick, high-quality image optimization.
 
-**Tech Stack**
-Frontend: ReactJS, Vite, Tailwind CSS
-Backend: Node.js, Express, Sharp
+---
 
-**Quick Start**
-# Clone repository
+## 🚀 **Features**
+
+- 📱 **Preset dimensions** for popular platforms — *Instagram, Story, Twitter*  
+- 🎛️ **Adjustable quality** control *(60–100%)*  
+- 🖼️ **Batch processing** with drag-and-drop upload  
+- 📦 **Bulk download** as ZIP  
+- 📊 **Real-time compression metrics** for each image and total size  
+
+---
+
+## 🧠 **Tech Stack**
+
+**Frontend**: React.js, Vite, Tailwind CSS<br>
+**Backend**: Node.js, Express.js, Sharp
+
+---
+
+## ⚙️ **Quick Start**
+
+```bash
+# Clone the repository
 git clone <repository-url>
 cd adobe-mock-ps
+
 # Install dependencies
 npm install
-# Start API server (Terminal 1)
+
+# Start the backend API server (Terminal 1)
 node server.js
-# Start dev server (Terminal 2)
+
+# Start the frontend development server (Terminal 2)
 npm run dev
-Open http://localhost:5173
+
+# Open in browser
+http://localhost:5173
+```
