@@ -10,7 +10,8 @@ A **modern web app** for batch resizing and compressing images — built for **m
 - 🎛️ **Adjustable quality** control *(60–100%)*  
 - 🖼️ **Batch processing** with drag-and-drop upload  
 - 📦 **Bulk download** as ZIP  
-- 📊 **Real-time compression metrics** for each image and total size  
+- 📊 **Real-time compression metrics** for each image and total size
+- 🎨 **Colour picker** for resizing images  
 
 ---
 
